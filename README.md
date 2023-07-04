@@ -1,8 +1,11 @@
 # Omnitalk JS Demo
 
 <br><br>
-<img width="508" alt="스크린샷 2023-06-23 오전 11 36 05" src="https://github.com/Luna-omni/demo-read-me/assets/125844802/ee697990-41a2-4aed-8bec-577b8508c828">
 
+<img width="238" height="400" alt="스크린샷 2023-07-04 오후 7 46 52" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/2341d3ce-7014-4034-8f0d-24b1e2517ede">
+<img width="230" height="400" alt="스크린샷 2023-07-04 오후 7 47 09" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/18ad534e-3dac-4dd6-b815-d193e8fd5c6c">
+<img width="238" height="400" alt="스크린샷 2023-07-04 오후 7 47 22" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/4b2df644-52b5-40f9-be35-66002520f32e">
+<img width="231" height="400" alt="스크린샷 2023-07-04 오후 7 47 33" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/308152e2-f458-46b5-9554-63641af82dea">
 <br><br>
 
 ## 🗒️ 구현된 데모
