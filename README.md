@@ -1,11 +1,10 @@
 # Omnitalk React Demo
 
 <br><br>
-
-<img width="238" height="400" alt="스크린샷 2023-07-04 오후 7 46 52" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/2341d3ce-7014-4034-8f0d-24b1e2517ede">
-<img width="230" height="400" alt="스크린샷 2023-07-04 오후 7 47 09" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/18ad534e-3dac-4dd6-b815-d193e8fd5c6c">
-<img width="238" height="400" alt="스크린샷 2023-07-04 오후 7 47 22" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/4b2df644-52b5-40f9-be35-66002520f32e">
-<img width="231" height="400" alt="스크린샷 2023-07-04 오후 7 47 33" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/308152e2-f458-46b5-9554-63641af82dea">
+<img width="300" height="400" alt="스크린샷 2023-07-04 오후 8 22 09" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/c53eae81-4740-4ec7-80e2-8783935eacda">
+<img width="300" height="400" alt="스크린샷 2023-07-04 오후 8 23 00" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/50f69d19-7040-4e41-814c-1063697e2fdc">
+<img width="500" height="600" alt="스크린샷 2023-07-04 오후 8 25 41" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/8072a2be-28b0-4c1f-9ae1-77a517e28f9c">
+<img width="472" height="600" alt="스크린샷 2023-07-04 오후 8 29 01" src="https://github.com/omnistory-labs/omnitalk.sdk/assets/125844802/d1c47392-87e9-4bdf-a6b0-f18d36af1843">
 <br><br>
 
 ## 🗒️ 구현된 데모
