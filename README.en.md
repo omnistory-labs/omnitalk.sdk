@@ -8,7 +8,7 @@
 # Omnitalk Javascript SDK 
 
 
-Omnitalk is a sdk that helps you easily implement real time communication on your web/app.<br/>
+Omnitalk is a CPaas platform service based on WebRTC. Omnitalk SDK enables you to implement easy real-time communication on Web/App. <br/>
 
 [![kor](https://img.shields.io/badge/lang-kor-F86F03.svg)](https://github.com/omnistory-labs/omnitalk.sdk/blob/main/README.md)
 [![en](https://img.shields.io/badge/lang-en-FFA41B.svg)](https://github.com/omnistory-labs/omnitalk.sdk/blob/main/README.en.md)
