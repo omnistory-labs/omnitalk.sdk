@@ -8,7 +8,7 @@
 # Omnitalk Javascript SDK 
 
 
-옴니톡은 web/app에서 간단하게 실시간 통신을 구현 가능하게 해주는 SDK입니다.<br/>
+옴니톡은 WebRTC 기반의 CPaas 플랫폼 서비스 입니다. 옴니톡 SDK를 통해 Web/App에서 간단하게 실시간 통신을 구현이 가능합니다. <br/>
 
 [![kor](https://img.shields.io/badge/lang-kor-F86F03.svg)](https://github.com/omnistory-labs/omnitalk.sdk/blob/main/README.md)
 [![en](https://img.shields.io/badge/lang-en-FFA41B.svg)](https://github.com/omnistory-labs/omnitalk.sdk/blob/main/README.en.md)
