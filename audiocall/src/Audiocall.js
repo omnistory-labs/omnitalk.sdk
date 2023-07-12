@@ -73,7 +73,6 @@ export default function AudioCall() {
 
           break;
         case "LEAVE_EVENT":
-          await omnitalk.leave(sessionId);
           window.location.reload(true);
           break;
         case "AUDIO_MUTE_EVENT":
