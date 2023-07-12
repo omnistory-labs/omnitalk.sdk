@@ -26,8 +26,8 @@ $(document).ready(async () => {
         $(".callState").html("connected");
         break;
       case "LEAVE_EVENT":
-        window.location.reload(true);
-        break;
+        clear("Hangup");
+        omnitalk.leave();
       default:
         break;
     }
