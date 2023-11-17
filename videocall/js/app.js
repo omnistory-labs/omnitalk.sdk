@@ -180,7 +180,7 @@ $(document).ready(() => {
       $("#peerNumber").html($("#callNum").val());
       await getDeviceInformation();
       $("#videoCallModal").modal("show");
-      await omnitalk.offerCall("videocall", $("#callNum").val(), true);
+      await omnitalk.offerCall("videocall", $("#callNum").val());
       $("#ringbacktone").trigger("play");
       startTimer();
     } catch (error) {
