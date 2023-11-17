@@ -54,71 +54,95 @@ export default function AudioConference() {
   const [roomName, setRoomName] = useState("");
 
   useEffect(() => {
-    omnitalk.on("event", async (msg) => {
-      switch (msg.cmd) {
-        case "CONNECTED_EVENT":
-          if (session === msg.session) return null;
-          if (arr.length === 0) {
-            setArr((prevArr) => {
-              const newArr = [...prevArr, msg.user_id];
-              const dataArr = newArr.filter((value, i, self) => {
-                return self.indexOf(value) === i;
-              });
-              return dataArr;
-            });
-          } else {
-            for (let i = 0; i < arr.length; i++) {
-              const data = arr[i];
-              if (arr !== data.user_id) {
+    setTimeout(async function () {
+      try {
+        const sessionResult = await omnitalk.createSession();
+        setSession(sessionResult.session);
+        setUserID(sessionResult.user_id);
+        localUser.current = sessionResult.user_id;
+        await omnitalk.roomList().then((res) => {
+          setRoomList(res.list);
+        });
+        await omnitalk.getDeviceList().then((res) => {
+          setAudioinput(res.audioinput);
+        });
+        omnitalk.on("event", async (msg) => {
+          switch (msg.cmd) {
+            case "CONNECTED_EVENT":
+              if (session === msg.session) return null;
+              if (arr.length === 0) {
                 setArr((prevArr) => {
-                  const newArr = [...prevArr, data.user_id];
+                  const newArr = [...prevArr, msg.user_id];
                   const dataArr = newArr.filter((value, i, self) => {
                     return self.indexOf(value) === i;
                   });
                   return dataArr;
                 });
+              } else {
+                for (let i = 0; i < arr.length; i++) {
+                  const data = arr[i];
+                  if (arr !== data.user_id) {
+                    setArr((prevArr) => {
+                      const newArr = [...prevArr, data.user_id];
+                      const dataArr = newArr.filter((value, i, self) => {
+                        return self.indexOf(value) === i;
+                      });
+                      return dataArr;
+                    });
+                  }
+                  return;
+                }
               }
-              return;
-            }
+              break;
+            case "LEAVE_EVENT":
+              try {
+                await omnitalk.partiList().then((res) => {
+                  if (res.list.length === 0) {
+                    setArr((prevArr) => {
+                      const filteredArr = prevArr.filter((userId) =>
+                        res.list.includes(userId)
+                      );
+                      return filteredArr;
+                    });
+                  } else {
+                    setArr((prevArr) => {
+                      const filteredUserIds = res.list
+                        .map((item) => item.user_id)
+                        .filter(
+                          (userId) =>
+                            !prevArr.some((item) => item.user_id === userId)
+                        );
+
+                      // console.log(filteredUserIds); // Output: [ 'RCbmnxFZfp' ]
+                      return filteredUserIds;
+                    });
+                  }
+                });
+              } catch (error) {
+                console.log(error);
+              }
+
+              break;
+            case "MUTE_EVENT":
+              handleMute(msg.user_id);
+              break;
+            case "UNMUTE_EVENT":
+              handleUnmute(msg.user_id);
+              break;
+
+            default:
+              break;
           }
-          break;
-        case "LEAVE_EVENT":
-          await omnitalk.partiList().then((res) => {
-            if (res.list.length === 0) {
-              setArr((prevArr) => {
-                const filteredArr = prevArr.filter((userId) =>
-                  res.list.includes(userId)
-                );
-                return filteredArr;
-              });
-            } else {
-              setArr((prevArr) => {
-                const filteredUserIds = res.list
-                  .map((item) => item.user_id)
-                  .filter(
-                    (userId) => !prevArr.some((item) => item.user_id === userId)
-                  );
-                return filteredUserIds;
-              });
-            }
+
+          omnitalk.on("close", () => {
+            console.log("closed");
+            window.location.reload();
           });
-
-          break;
-        case "MUTE_EVENT":
-          handleMute(msg.user_id);
-          break;
-        case "UNMUTE_EVENT":
-          handleUnmute(msg.user_id);
-          break;
-
-        default:
-          break;
+        });
+      } catch (error) {
+        console.log(error);
       }
-
-      omnitalk.on("close", () => {
-        console.log("closed");
-      });
-    });
+    }, 2000);
   }, []);
 
   const handleCreateRoom = async () => {
@@ -158,7 +182,11 @@ export default function AudioConference() {
   };
 
   const handleLeave = async () => {
-    await omnitalk.leave(session);
+    try {
+      await omnitalk.leave(session);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const refresh = (e) => {
@@ -168,26 +196,6 @@ export default function AudioConference() {
     });
     window.location.reload();
   };
-
-  useEffect(() => {
-    async function init() {
-      try {
-        const sessionResult = await omnitalk.createSession();
-        setSession(sessionResult.session);
-        setUserID(sessionResult.user_id);
-        localUser.current = sessionResult.user_id;
-        await omnitalk.roomList().then((res) => {
-          setRoomList(res.list);
-        });
-        await omnitalk.getDeviceList().then((res) => {
-          setAudioinput(res.audioinput);
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    init();
-  }, []);
 
   useEffect(() => {
     setMutedUsers({});
@@ -258,34 +266,41 @@ export default function AudioConference() {
               <StyledRoomCard
                 key={`room-${i}`}
                 onClick={async () => {
-                  if (room.secret) {
-                    setJoinModal(true);
-                  } else {
-                    setBroadcastingToggle(true);
-                    setRoomName(room.subject);
-                    await omnitalk.joinRoom(room.room_id);
-                    await omnitalk.partiList(room.room_id).then((res) => {
-                      setPartilist(res.list);
-                      if (res.list.length === 0) {
-                        setArr((prevArr) => {
-                          const newArr = [...prevArr, userId];
-                          const dataArr = newArr.filter((value, i, self) => {
-                            return self.indexOf(value) === i;
-                          });
-                          return dataArr;
-                        });
-                      } else {
-                        res.list.forEach((data) => {
+                  try {
+                    if (room.secret) {
+                      setJoinModal(true);
+                    } else {
+                      setBroadcastingToggle(true);
+                      setRoomName(room.subject);
+                      await omnitalk.joinRoom(room.room_id);
+                      await omnitalk.partiList(room.room_id).then((res) => {
+                        console.log("res, partilist", res.list);
+                        setPartilist(res.list);
+                        if (res.list.length === 0) {
                           setArr((prevArr) => {
-                            const newArr = [...prevArr, data.user_id];
+                            const newArr = [...prevArr, userId];
                             const dataArr = newArr.filter((value, i, self) => {
                               return self.indexOf(value) === i;
                             });
                             return dataArr;
                           });
-                        });
-                      }
-                    });
+                        } else {
+                          res.list.forEach((data) => {
+                            setArr((prevArr) => {
+                              const newArr = [...prevArr, data.user_id];
+                              const dataArr = newArr.filter(
+                                (value, i, self) => {
+                                  return self.indexOf(value) === i;
+                                }
+                              );
+                              return dataArr;
+                            });
+                          });
+                        }
+                      });
+                    }
+                  } catch (error) {
+                    console.log(error);
                   }
                 }}
               >
@@ -403,9 +418,13 @@ export default function AudioConference() {
                           className="roomIcon"
                           type="button"
                           onClick={async () => {
-                            await omnitalk.setUnmute("audio");
-                            setAudiomuteButton(false);
-                            setAudioinputToggle(false);
+                            try {
+                              await omnitalk.setUnmute("audio");
+                              setAudiomuteButton(false);
+                              setAudioinputToggle(false);
+                            } catch (error) {
+                              console.log(error);
+                            }
                           }}
                         >
                           <AiOutlineAudioMuted />
@@ -417,9 +436,13 @@ export default function AudioConference() {
                           className="roomIcon"
                           type="button"
                           onClick={async () => {
-                            await omnitalk.setMute("audio");
-                            setAudiomuteButton(true);
-                            setAudioinputToggle(false);
+                            try {
+                              await omnitalk.setMute("audio");
+                              setAudiomuteButton(true);
+                              setAudioinputToggle(false);
+                            } catch (error) {
+                              console.log(error);
+                            }
                           }}
                         >
                           <AiFillAudio />
@@ -459,7 +482,9 @@ export default function AudioConference() {
                                 className="select"
                                 key={i}
                                 onClick={async () => {
-                                  await omnitalk.setAudioDevice(i);
+                                  try {
+                                    await omnitalk.setAudioDevice(i);
+                                  } catch (error) {}
                                 }}
                               >
                                 {list.label}

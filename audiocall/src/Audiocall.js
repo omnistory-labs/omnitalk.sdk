@@ -257,7 +257,11 @@ export default function AudioCall() {
                 type="button"
                 className="roomIcon"
                 onClick={async () => {
-                  await omnitalk.answerCall("audiocall");
+                  try {
+                    await omnitalk.answerCall("audiocall");
+                  } catch (error) {
+                    console.log(error);
+                  }
                 }}
               >
                 <ImPhone />
@@ -316,9 +320,13 @@ export default function AudioCall() {
                     className="roomIcon"
                     type="button"
                     onClick={async () => {
-                      await omnitalk.setUnmute("audio");
-                      setAudiomuteButton(false);
-                      setAudioinputToggle(false);
+                      try {
+                        await omnitalk.setUnmute("audio");
+                        setAudiomuteButton(false);
+                        setAudioinputToggle(false);
+                      } catch (error) {
+                        console.log(error);
+                      }
                     }}
                   >
                     <AiOutlineAudioMuted color="mediumpurple" />
@@ -330,9 +338,13 @@ export default function AudioCall() {
                     className="roomIcon"
                     type="button"
                     onClick={async () => {
-                      await omnitalk.setMute("audio");
-                      setAudiomuteButton(true);
-                      setAudioinputToggle(false);
+                      try {
+                        await omnitalk.setMute("audio");
+                        setAudiomuteButton(true);
+                        setAudioinputToggle(false);
+                      } catch (error) {
+                        console.log(error);
+                      }
                     }}
                   >
                     <AiFillAudio />
@@ -371,8 +383,12 @@ export default function AudioCall() {
                         className="select"
                         key={i}
                         onClick={async () => {
-                          await omnitalk.setAudioDevice(list.deviceId);
-                          setAudioinputToggle(false);
+                          try {
+                            await omnitalk.setAudioDevice(list.deviceId);
+                            setAudioinputToggle(false);
+                          } catch (error) {
+                            console.log(error);
+                          }
                         }}
                       >
                         {list.label}

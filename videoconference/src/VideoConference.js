@@ -28,44 +28,6 @@ const SERVICE_KEY = "SERVICE KEY를 입력하세요";
 Omnitalk.init(SERVICE_ID, SERVICE_KEY);
 const omnitalk = Omnitalk.getInstance();
 
-const resolutionInput = [
-  {
-    id: 0,
-    resolution: "320x240 (QVGA)",
-    value: "QVGA",
-  },
-  {
-    id: 1,
-    resolution: "640x480 (VGA)",
-    value: "VGA",
-  },
-  {
-    id: 2,
-    resolution: "720x480 (SD)",
-    value: "SD",
-  },
-  {
-    id: 3,
-    resolution: "1280x720 (HD)",
-    value: "HD",
-  },
-  {
-    id: 4,
-    resolution: "1920x1080 (FHD)",
-    value: "FHD",
-  },
-  {
-    id: 5,
-    resolution: "2560x1440 (2K)",
-    value: "2K",
-  },
-  {
-    id: 6,
-    resolution: "3840x2160 (4K)",
-    value: "4K",
-  },
-];
-
 export default function VideoConference() {
   const [session, setSession] = useState("");
   const [roomTitle, setRoomTitle] = useState("");
@@ -92,7 +54,6 @@ export default function VideoConference() {
   const [joinModal, setJoinModal] = useState(false);
 
   // room toggle
-  const [resolution, setResolution] = useState(false);
   const [audio, setAudio] = useState(false);
   const [camera, setCamera] = useState(false);
   const [audiomuteButton, setAudiomuteButton] = useState(false);
@@ -106,49 +67,67 @@ export default function VideoConference() {
   const [mobileTab, setMobileTab] = useState(0);
 
   useEffect(() => {
-    omnitalk.on("event", async (msg) => {
-      switch (msg.cmd) {
-        case "BROADCASTING_EVENT":
-          try {
-            updateUserInfoArr({
-              userId: msg.user_id,
-              session: msg.session,
-            });
-          } catch (error) {
-            console.log(error);
+    setTimeout(async function () {
+      try {
+        const sessionResult = await omnitalk.createSession();
+        setSession(sessionResult.session);
+        setUserID(sessionResult.user_id);
+        await omnitalk.roomList("videoroom").then((res) => {
+          setRoomList(res.list);
+        });
+        await omnitalk.getDeviceList().then((res) => {
+          setVideoinput(res.videoinput);
+          setAudioinput(res.audioinput);
+        });
+        omnitalk.on("event", async (msg) => {
+          switch (msg.cmd) {
+            case "BROADCASTING_EVENT":
+              try {
+                updateUserInfoArr({
+                  userId: msg.user_id,
+                  session: msg.session,
+                });
+              } catch (error) {
+                console.log(error);
+              }
+              break;
+            case "LEAVE_EVENT":
+              setUserInfoArr((prev) => {
+                const filteredData = prev.filter(
+                  (userInfo) => userInfo.session !== msg.session
+                );
+                return [...filteredData];
+              });
+              break;
+            case "MUTE_EVENT":
+              if (msg.track === "audio") {
+                handleMute(msg.session);
+              }
+              if (msg.track === "video") {
+                handleVideoMute(msg.session);
+              }
+              break;
+            case "UNMUTE_EVENT":
+              if (msg.track === "audio") {
+                handleUnmute(msg.session);
+              }
+              if (msg.track === "video") {
+                handleVideoUnmute(msg.session);
+              }
+              break;
+            default:
+              break;
           }
-          break;
-        case "LEAVE_EVENT":
-          setUserInfoArr((prev) => {
-            const filteredData = prev.filter(
-              (userInfo) => userInfo.session !== msg.session
-            );
-            return [...filteredData];
-          });
-          break;
-        case "MUTE_EVENT":
-          if (msg.track === "audio") {
-            handleMute(msg.session);
-          }
-          if (msg.track === "video") {
-            handleVideoMute(msg.session);
-          }
-          break;
-        case "UNMUTE_EVENT":
-          if (msg.track === "audio") {
-            handleUnmute(msg.session);
-          }
-          if (msg.track === "video") {
-            handleVideoUnmute(msg.session);
-          }
-          break;
-        default:
-          break;
+        });
+        omnitalk.on("close", () => {
+          console.log("close Event");
+          window.location.reload();
+        });
+      } catch (error) {
+        console.log(error);
       }
-    });
-    omnitalk.on("close", () => {
-      console.log("close Event");
-    });
+    }, 2000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateUserInfoArr = (newData) => {
@@ -177,14 +156,19 @@ export default function VideoConference() {
   };
 
   const handleLeave = async () => {
-    await omnitalk.leave(session);
-    window.location.reload();
+    try {
+      await omnitalk.leave(session);
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const refresh = (e) => {
     e.preventDefault();
     try {
       omnitalk.roomList("videoroom").then((res) => {
+        console.log(res);
         setRoomList(res.list);
       });
     } catch (error) {
@@ -215,30 +199,13 @@ export default function VideoConference() {
   };
 
   useEffect(() => {
-    async function init() {
+    userInfoArr.map(async (userInfo) => {
       try {
-        await omnitalk.createSession().then((res) => {
-          setSession(res.session);
-          setUserID(res.user_id);
-        });
-        await omnitalk.roomList("videoroom").then((res) => {
-          setRoomList(res.list);
-        });
-        await omnitalk.getDeviceList().then((res) => {
-          setVideoinput(res.videoinput);
-          setAudioinput(res.audioinput);
-        });
-        await omnitalk.setResolution("SD");
+        console.log("userInfo", userInfo);
+        await omnitalk.subscribe(userInfo.session, userInfo.userId);
       } catch (error) {
         console.log(error);
       }
-    }
-    init();
-  }, []);
-
-  useEffect(() => {
-    userInfoArr.map(async (userInfo) => {
-      await omnitalk.subscribe(userInfo.session, userInfo.userId);
     });
   }, [userInfoArr]);
 
@@ -459,39 +426,6 @@ export default function VideoConference() {
                       <span>/{roomName}</span>
                     </h3>
                     <div className="button_wrap">
-                      {/* resolution 설정 */}
-                      <div className="menu_wrap">
-                        <button
-                          className="roomIcon"
-                          type="button"
-                          onClick={() => {
-                            setResolution((prev) => !prev);
-                            setAudio(false);
-                            setCamera(false);
-                          }}
-                        >
-                          <MdPictureInPictureAlt />
-                        </button>
-                        {resolution && (
-                          <div className="select_wrap">
-                            {resolutionInput.map((list) => {
-                              return (
-                                <button
-                                  key={list.id}
-                                  type="button"
-                                  className="select"
-                                  onClick={async () => {
-                                    await omnitalk.setResolution(list.value);
-                                    setResolution(false);
-                                  }}
-                                >
-                                  {list.resolution}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
                       {/* 오디오 설정 */}
                       <div className="menu_wrap">
                         <button
@@ -500,7 +434,6 @@ export default function VideoConference() {
                           onClick={() => {
                             setAudio((prev) => !prev);
                             setCamera(false);
-                            setResolution(false);
                           }}
                         >
                           <span>
@@ -516,10 +449,14 @@ export default function VideoConference() {
                                   className="select"
                                   key={i}
                                   onClick={async () => {
-                                    await omnitalk.setAudioDevice(
-                                      list.deviceId
-                                    );
-                                    setAudio(false);
+                                    try {
+                                      await omnitalk.setAudioDevice(
+                                        list.deviceId
+                                      );
+                                      setAudio(false);
+                                    } catch (error) {
+                                      console.log(error);
+                                    }
                                   }}
                                 >
                                   {list.label}
@@ -537,7 +474,6 @@ export default function VideoConference() {
                           onClick={() => {
                             setCamera((prev) => !prev);
                             setAudio(false);
-                            setResolution(false);
                           }}
                         >
                           <MdCameraswitch />
@@ -552,10 +488,14 @@ export default function VideoConference() {
                                   className="select"
                                   key={i}
                                   onClick={async () => {
-                                    await omnitalk.setVideoDevice(
-                                      list.deviceId
-                                    );
-                                    setCamera(false);
+                                    try {
+                                      await omnitalk.setVideoDevice(
+                                        list.deviceId
+                                      );
+                                      setCamera(false);
+                                    } catch (error) {
+                                      console.log(error);
+                                    }
                                   }}
                                 >
                                   {list.label}
@@ -573,11 +513,14 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                await omnitalk.setUnmute("audio");
-                                setAudiomuteButton(false);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
+                                try {
+                                  await omnitalk.setUnmute("audio");
+                                  setAudiomuteButton(false);
+                                  setCamera(false);
+                                  setAudio(false);
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <AiOutlineAudioMuted />
@@ -589,11 +532,14 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                await omnitalk.setMute("audio");
-                                setAudiomuteButton(true);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
+                                try {
+                                  await omnitalk.setMute("audio");
+                                  setAudiomuteButton(true);
+                                  setCamera(false);
+                                  setAudio(false);
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <AiFillAudio />
@@ -609,11 +555,14 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                setVideomuteButton(false);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
-                                await omnitalk.setUnmute("video");
+                                try {
+                                  setVideomuteButton(false);
+                                  setCamera(false);
+                                  setAudio(false);
+                                  await omnitalk.setUnmute("video");
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <BsCameraVideoOff />
@@ -625,11 +574,14 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                setVideomuteButton(true);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
-                                await omnitalk.setMute("video");
+                                try {
+                                  setVideomuteButton(true);
+                                  setCamera(false);
+                                  setAudio(false);
+                                  await omnitalk.setMute("video");
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <BsFillCameraVideoFill />
@@ -661,11 +613,14 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                await omnitalk.setAudioMute(false);
-                                setAudiomuteButton(false);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
+                                try {
+                                  await omnitalk.setUnmute("audio");
+                                  setAudiomuteButton(false);
+                                  setCamera(false);
+                                  setAudio(false);
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <AiOutlineAudioMuted />
@@ -677,11 +632,14 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                await omnitalk.setAudioMute(true);
-                                setAudiomuteButton(true);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
+                                try {
+                                  await omnitalk.setMute("audio");
+                                  setAudiomuteButton(true);
+                                  setCamera(false);
+                                  setAudio(false);
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <AiFillAudio />
@@ -697,11 +655,13 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                setVideomuteButton(false);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
-                                await omnitalk.setVideoMute(false);
+                                try {
+                                  setCamera(false);
+                                  setAudio(false);
+                                  await omnitalk.setUnmute("video");
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <BsCameraVideoOff />
@@ -713,11 +673,14 @@ export default function VideoConference() {
                               className="roomIcon"
                               type="button"
                               onClick={async () => {
-                                setVideomuteButton(true);
-                                setResolution(false);
-                                setCamera(false);
-                                setAudio(false);
-                                await omnitalk.setVideoMute(true);
+                                try {
+                                  setVideomuteButton(true);
+                                  setCamera(false);
+                                  setAudio(false);
+                                  await omnitalk.setMute("video");
+                                } catch (error) {
+                                  console.log(error);
+                                }
                               }}
                             >
                               <BsFillCameraVideoFill />
@@ -748,128 +711,6 @@ export default function VideoConference() {
                             >
                               <AiOutlineClose />
                             </button>
-                          </div>
-                          <div className="center">
-                            {/* resolution 설정 */}
-                            <div className="setting_menu_wrap">
-                              <div className="bnt_container">
-                                <button
-                                  className={
-                                    mobileTab === 0
-                                      ? "roomIcon_active"
-                                      : "roomIcon"
-                                  }
-                                  type="button"
-                                  onClick={() => {
-                                    setMobileTab(0);
-                                  }}
-                                >
-                                  <MdPictureInPictureAlt />
-                                  <span>해상도</span>
-                                </button>
-                                <button
-                                  className={
-                                    mobileTab === 1
-                                      ? "roomIcon_active"
-                                      : "roomIcon"
-                                  }
-                                  type="button"
-                                  onClick={() => {
-                                    setMobileTab(1);
-                                  }}
-                                >
-                                  <span>
-                                    <FiSpeaker />
-                                    <span>오디오</span>
-                                  </span>
-                                </button>
-                                <button
-                                  className={
-                                    mobileTab === 2
-                                      ? "roomIcon_active"
-                                      : "roomIcon"
-                                  }
-                                  type="button"
-                                  onClick={() => {
-                                    setMobileTab(2);
-                                  }}
-                                >
-                                  <MdCameraswitch />
-                                  <span>카메라</span>
-                                </button>
-                              </div>
-                              <div className="select_container">
-                                {mobileTab === 0 && (
-                                  <>
-                                    {resolutionInput.map((list) => {
-                                      return (
-                                        <button
-                                          key={list.id}
-                                          type="button"
-                                          className="select"
-                                          onClick={async () => {
-                                            await omnitalk.setResolution(
-                                              list.value
-                                            );
-                                            setResolution(false);
-                                          }}
-                                        >
-                                          {list.resolution}
-                                        </button>
-                                      );
-                                    })}
-                                  </>
-                                )}
-                                {/* 오디오 설정 */}
-                                {mobileTab === 1 && (
-                                  <>
-                                    {Object.values(audioinput).map(
-                                      (list, i) => {
-                                        return (
-                                          <button
-                                            type="button"
-                                            className="select"
-                                            key={i}
-                                            onClick={async () => {
-                                              await omnitalk.setAudioDevice(
-                                                list.deviceId
-                                              );
-                                              setAudio(false);
-                                            }}
-                                          >
-                                            {list.label}
-                                          </button>
-                                        );
-                                      }
-                                    )}
-                                  </>
-                                )}
-                                {/* 카메라 설정 */}
-                                {mobileTab === 2 && (
-                                  <>
-                                    {Object.values(videoinput).map(
-                                      (list, i) => {
-                                        return (
-                                          <button
-                                            type="button"
-                                            className="select"
-                                            key={i}
-                                            onClick={async () => {
-                                              await omnitalk.setVideoDevice(
-                                                list.deviceId
-                                              );
-                                              setCamera(false);
-                                            }}
-                                          >
-                                            {list.label}
-                                          </button>
-                                        );
-                                      }
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </div>
                           </div>
                         </div>
                       )}
